@@ -11,6 +11,6 @@ Packet Analyzer in C# using raw sockets.
 - Packet coloring
 - Clean and easy to use interface
 
-To capture all the packets using a Wi-Fi interface your network card must support promiscuous and monitor modes.
+To capture all the packets your network card must support promiscuous and monitor modes.
 
 ![Pepe Sniffer](preview.png)
