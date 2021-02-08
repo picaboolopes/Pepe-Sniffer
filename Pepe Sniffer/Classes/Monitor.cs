@@ -43,8 +43,7 @@ namespace PepeSniffer
                 }
                 catch (Exception)
                 {
-                    socket.Close();
-                    socket = null;
+                    Stop();
                     throw;
                 }
             }
@@ -52,22 +51,20 @@ namespace PepeSniffer
 
         public void Stop()
         {
-            if (socket != null)
-            {
-                socket.Close();
-                socket = null;
-            }
+            socket?.Close();
+            socket = null;
         }
 
         private void OnReceive(IAsyncResult ar)
         {
             try
             {
-                int len = socket.EndReceive(ar);
                 if (socket != null)
                 {
+                    int len = socket.EndReceive(ar);
                     byte[] receivedBuffer = new byte[len];
                     Array.Copy(buffer, 0, receivedBuffer, 0, len);
+
                     try
                     {
                         Packet packet = new Packet(receivedBuffer);
@@ -82,7 +79,8 @@ namespace PepeSniffer
                         Console.WriteLine(ae.ToString());
                     }
                 }
-                socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(this.OnReceive), null);
+
+                socket?.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(OnReceive), null);
             }
             catch
             {
