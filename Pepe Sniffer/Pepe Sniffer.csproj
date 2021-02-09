@@ -123,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />
+    <Content Include="Resources\icon.ico" />
     <None Include="Resources\txt.png" />
     <None Include="Resources\csv.png" />
     <None Include="Resources\bin.png" />

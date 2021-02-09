@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Data;
 
 namespace PepeSniffer
 {
@@ -17,37 +18,69 @@ namespace PepeSniffer
             InitializeComponent();
         }
 
-        private BindingSource bindingSource = new BindingSource();
-        private NetworkInterface[] networkInterfaces;
+        /// <summary>
+        /// Array containing all the network interfaces in your PC.
+        /// </summary>
+        private NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+        /// <summary>
+        /// Represents the monitor that listens on the selected interface.
+        /// </summary>
         private Monitor currentMonitor;
+
+        /// <summary>
+        /// List of all monitors to listen on.
+        /// </summary>
         private List<Monitor> monitorList = new List<Monitor>();
-        private List<Packet> packetsList = new List<Packet>();
-        private string protocolFilter = "ALL";
 
-        private delegate void refresh(Packet p);
+        /// <summary>
+        /// Data source of the DGV.
+        /// </summary>
+        private DataTable dataTable = new DataTable();
 
-        private void Sniffer_Load(object sender, EventArgs e)
+        /// <summary>
+        /// Sets the columns of the DGV and fills the ComboBox with the interfaces.
+        /// </summary>
+        private void LoadControls()
         {
-            DGV.AutoGenerateColumns = false;
-            DGV.DataSource = bindingSource;
-            DGV.Columns["SourceIp"].DataPropertyName = "SourceIp";
-            DGV.Columns["SourcePort"].DataPropertyName = "SourcePort";
-            DGV.Columns["DestinationIp"].DataPropertyName = "DestinationIP";
-            DGV.Columns["DestinationPort"].DataPropertyName = "DestinationPort";
-            DGV.Columns["Protocol"].DataPropertyName = "Protocol";
-            DGV.Columns["Time"].DataPropertyName = "Time";
-            DGV.Columns["Length"].DataPropertyName = "TotalLength";
-            DGV.Columns["Data"].DataPropertyName = "CharString";
+            dataTable.Columns.Add("source_ip");
+            dataTable.Columns.Add("source_port");
+            dataTable.Columns.Add("destination_ip");
+            dataTable.Columns.Add("destination_port");
+            dataTable.Columns.Add("protocol");
+            dataTable.Columns.Add("time");
+            dataTable.Columns.Add("length", typeof(int));
+            dataTable.Columns.Add("data");
 
-            networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+            // Hidden columns
+            dataTable.Columns.Add("hex");
+            dataTable.Columns.Add("raw", typeof(byte[]));
+
+            DGV.AutoGenerateColumns = false;
+            DGV.DataSource = dataTable;
+            DGV.Columns["SourceIp"].DataPropertyName = "source_ip";
+            DGV.Columns["SourcePort"].DataPropertyName = "source_port";
+            DGV.Columns["DestinationIp"].DataPropertyName = "destination_ip";
+            DGV.Columns["DestinationPort"].DataPropertyName = "destination_port";
+            DGV.Columns["Protocol"].DataPropertyName = "protocol";
+            DGV.Columns["Time"].DataPropertyName = "time";
+            DGV.Columns["Length"].DataPropertyName = "length";
+            DGV.Columns["Data"].DataPropertyName = "data";
+
+            // Hidden columns
+            DGV.Columns["Hex"].DataPropertyName = "hex";
+            DGV.Columns["Raw"].DataPropertyName = "raw";
 
             for (var i = 0; i <= networkInterfaces.Length - 1; i++)
                 cbInterfaces.Items.Add(networkInterfaces[i].Name);
 
             cbInterfaces.SelectedIndex = 0;
-            cbProtocol.SelectedIndex = 0;
         }
 
+        /// <summary>
+        /// Starts listening on the selected interface and therefore to receive packets.
+        /// </summary>
+        /// <returns>Returns true if it was able to start listening on the selected interface, otherwise false.</returns>
         private bool StartReceiving()
         {
             if (cbInterfaces.SelectedIndex == 0) // All interfaces
@@ -99,6 +132,9 @@ namespace PepeSniffer
             
         }
 
+        /// <summary>
+        /// Stops capturing packets.
+        /// </summary>
         private void StopReceiving()
         {
             if (cbInterfaces.SelectedIndex == 0) // All interfaces
@@ -115,94 +151,68 @@ namespace PepeSniffer
                 
         }
 
+        /// <summary>
+        /// Everytime a packet is captured, invokes the method OnRefresh.
+        /// </summary>
+        /// <param name="monitor">Monitor that received this packet.</param>
+        /// <param name="p">Packet received.</param>
         private void OnNewPacket(Monitor monitor, Packet p) => Invoke(new refresh(OnRefresh), p);
-        
+
+        private delegate void refresh(Packet p);
+
+        /// <summary>
+        /// Updates the DGV with the given packet.
+        /// </summary>
+        /// <param name="p">Packet received.</param>
         private void OnRefresh(Packet p)
         {
-            packetsList.Add(p);
-            AddToBindingSource(p);
+            dataTable.Rows.Add(new object[]
+            {
+                p.SourceIp, p.SourcePort, p.DestinationIP, p.DestinationPort, p.Protocol, p.Time, p.TotalLength, p.CharString, p.HexString, p.Bytes
+            });
             ColorRows();
-            DGV.Refresh();
 
             if (DGV.Rows.Count != 0 && btnAutomaticScroll.Checked)
             {
                 DGV.FirstDisplayedScrollingRowIndex = DGV.RowCount - 1;
-            } 
-                
-        }
-
-        private void AddToBindingSource(Packet p)
-        {
-            string showOnlyIp = tbIpFilter.Text;
-            string port = tbPortFilter.Text;
-
-            bool CheckProtocol()
-            {
-                if (!protocolFilter.Equals("ALL"))
-                {
-                    return p.Protocol.Equals(protocolFilter);
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            bool CheckIP()
-            {
-                if (!showOnlyIp.Equals(""))
-                {
-                    return p.SourceIp.StartsWith(showOnlyIp) || p.DestinationIP.StartsWith(showOnlyIp);
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            bool CheckPort()
-            {
-                if (!port.Equals(""))
-                {
-                    return p.SourcePort.Equals(port) || p.DestinationPort.Equals(port);
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            if (CheckProtocol() && CheckIP() && CheckPort())
-            {
-                bindingSource.Add(p);
             }
         }
 
+        /// <summary>
+        /// Sets the filter of the DGV.
+        /// </summary>
         private void FilterDGV()
         {
-            string showOnlyIp = tbIpFilter.Text;
-            string port = tbPortFilter.Text;
+            string filter = tbFilter.Text;
+            DataTable dataTable = (DataTable) DGV.DataSource;
 
-            List<Packet> filteredPacketList = new List<Packet>(packetsList);
-
-            filteredPacketList = filteredPacketList.FindAll(packet =>
-                protocolFilter.Equals("ALL") || packet.Protocol.Equals(protocolFilter)
-            );
-
-            filteredPacketList = filteredPacketList.FindAll(packet =>
-                showOnlyIp.Equals("") || (packet.SourceIp.StartsWith(showOnlyIp) || packet.DestinationIP.StartsWith(showOnlyIp))
-            );
-
-            filteredPacketList = filteredPacketList.FindAll(packet =>
-                port.Equals("") || (packet.SourcePort.Equals(port) || packet.DestinationPort.Equals(port))
-            );
-
-            bindingSource.List.Clear();
-            filteredPacketList.ForEach(p => bindingSource.Add(p));
-            DGV.Refresh();
-            ColorRows();
+            try
+            {
+                if (string.IsNullOrEmpty(filter))
+                {
+                    dataTable.DefaultView.RowFilter = "";
+                    tbFilter.BackColor = Color.White;
+                } 
+                else
+                {
+                    dataTable.DefaultView.RowFilter = filter;
+                    tbFilter.BackColor = Color.LimeGreen;
+                }
+            }
+            catch (Exception)
+            {
+                dataTable.DefaultView.RowFilter = "";
+                tbFilter.BackColor = Color.Crimson;
+            }
+            finally
+            {
+                ColorRows();
+            }
         }
 
+        /// <summary>
+        /// Colors all the rows of the DGV depending on the protocol the respective packet uses.
+        /// </summary>
         private void ColorRows()
         {
             if (btnPacketColoring.Checked)
@@ -255,6 +265,10 @@ namespace PepeSniffer
             }
         }
 
+        /// <summary>
+        /// Sets the current selected row of the DGV.
+        /// </summary>
+        /// <param name="index">Index of the row to select.</param>
         private void SetSelectedRow(int index)
         {
             if (index >= 0 && index < DGV.RowCount)
@@ -264,6 +278,9 @@ namespace PepeSniffer
             }
         }
 
+        /// <summary>
+        /// Exports all packets to a txt file.
+        /// </summary>
         private void ExportPacketsAsText()
         {
             if (DGV.RowCount > 0)
@@ -274,30 +291,38 @@ namespace PepeSniffer
                     Title = "Export selected packets as text",
                     FileName = "packets.txt"
                 };
-                DialogResult dialogResult = sfd.ShowDialog();
 
-                if (sfd.FileName != "" && dialogResult == DialogResult.OK)
+                if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     using (StreamWriter sw = new StreamWriter(sfd.OpenFile()))
                     {
-                        sw.WriteLine("------------------------------------------------------------------------------------------\n");
+                        sw.WriteLine("---------------------------------------------\n");
 
-                        foreach (Packet packet in bindingSource.List)
+                        foreach (DataGridViewRow row in DGV.Rows)
                         {
-                            sw.WriteLine(string.Format("{0, -20}{1}", "PROTOCOL:", packet.Protocol));
-                            sw.WriteLine(!string.IsNullOrEmpty(packet.SourceIp) ?
-                                string.Format("{0, -20}{1}", "SOURCE:", packet.SourceIp + ":" + packet.SourcePort) :
-                                string.Format("{0, -20}{1}", "SOURCE:", packet.SourceIp));
-                            sw.WriteLine(!string.IsNullOrEmpty(packet.DestinationPort) ?
-                                string.Format("{0, -20}{1}", "DESTINATION:", packet.DestinationIP + ":" + packet.DestinationPort) :
-                                string.Format("{0, -20}{1}", "DESTINATION:", packet.DestinationIP));
-                            sw.WriteLine(string.Format("{0, -20}{1} bytes", "TOTAL LENGTH:", packet.TotalLength));
-                            sw.WriteLine(string.Format("{0, -20}{1}", "CAPTURE TIME:", packet.Time));
-                            sw.WriteLine("\nHEX DATA:");
-                            sw.WriteLine(packet.HexString.Length > 0 ?
-                                packet.HexString :
+                            string sourceIP = row.Cells["SourceIp"].Value.ToString();
+                            string sourcePort = row.Cells["SourcePort"].Value.ToString();
+                            string destinationIP = row.Cells["DestinationIp"].Value.ToString();
+                            string destinationPort = row.Cells["DestinationPort"].Value.ToString();
+                            string protocol = row.Cells["Protocol"].Value.ToString();
+                            string time = row.Cells["Time"].Value.ToString();
+                            string length = row.Cells["Length"].Value.ToString();
+                            string data = row.Cells["Data"].Value.ToString();
+
+                            sw.WriteLine(string.Format("{0, -20}{1}", "PROTOCOL:", protocol));
+                            sw.WriteLine(!string.IsNullOrEmpty(sourcePort) ?
+                                string.Format("{0, -20}{1}", "SOURCE:", sourceIP + ":" + sourcePort) :
+                                string.Format("{0, -20}{1}", "SOURCE:", sourceIP));
+                            sw.WriteLine(!string.IsNullOrEmpty(destinationPort) ?
+                                string.Format("{0, -20}{1}", "DESTINATION:", destinationIP + ":" + destinationPort) :
+                                string.Format("{0, -20}{1}", "DESTINATION:", destinationIP));
+                            sw.WriteLine(string.Format("{0, -20}{1} bytes", "TOTAL LENGTH:", length));
+                            sw.WriteLine(string.Format("{0, -20}{1}", "CAPTURE TIME:", time));
+                            sw.WriteLine("\nDATA:");
+                            sw.WriteLine(data.Length > 0 ?
+                                data :
                                 "Empty\n");
-                            sw.WriteLine("------------------------------------------------------------------------------------------\n");
+                            sw.WriteLine("---------------------------------------------\n");
                         }
 
                         sw.Flush();
@@ -311,6 +336,9 @@ namespace PepeSniffer
             }
         }
 
+        /// <summary>
+        /// Exports the selected packet bytes to a binary file.
+        /// </summary>
         private void ExportSelectedPacketAsBinary()
         {
             if (DGV.SelectedRows.Count == 1)
@@ -321,15 +349,16 @@ namespace PepeSniffer
                     Title = "Export packet bytes",
                     FileName = "packet_data.bin"
                 };
-                DialogResult dialogResult = sfd.ShowDialog();
 
-                if (sfd.FileName != "" && dialogResult == DialogResult.OK)
+                if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     using (StreamWriter sw = new StreamWriter(sfd.OpenFile()))
                     {
-                        Packet packet = (Packet)bindingSource.List[DGV.CurrentCell.RowIndex];
 
-                        foreach (byte b in packet.Bytes)
+                        DataGridViewRow selectedRow = DGV.CurrentRow;
+                        byte[] bytes = (byte[]) selectedRow.Cells["Raw"].Value;
+
+                        foreach (byte b in bytes)
                             sw.Write((char)b);
 
                         sw.Flush();
@@ -343,6 +372,9 @@ namespace PepeSniffer
             }
         }
 
+        /// <summary>
+        /// Exports all packets as CSV.
+        /// </summary>
         private void ExportPacketsAsCsv()
         {
             if (DGV.RowCount > 0)
@@ -356,7 +388,7 @@ namespace PepeSniffer
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    int columnCount = DGV.Columns.Count;
+                    int columnCount = DGV.Columns.Count - 2;
                     string columnNames = "";
                     string[] outputCsv = new string[DGV.Rows.Count + 1];
                     for (int i = 0; i < columnCount; i++)
@@ -389,6 +421,13 @@ namespace PepeSniffer
             }
         }
 
+        // EVENTS
+
+        private void Sniffer_Load(object sender, EventArgs e)
+        {
+            LoadControls();
+        }
+
         private void btnStart_Click(object sender, EventArgs e)
         {
             if (StartReceiving())
@@ -415,22 +454,24 @@ namespace PepeSniffer
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-            bindingSource.Clear();
-            packetsList.Clear();
-            bindingSource.ResetBindings(true);
+            dataTable.Rows.Clear();
             rtbHexadecimal.Text = "";
             rtbChars.Text = "";
         }
 
         private void DGV_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            int index = e.RowIndex;
+
+            if (index >= 0)
             {
-                Packet p = (Packet) bindingSource.List[e.RowIndex];
-                rtbHexadecimal.Text = p.HexString;
-                rtbChars.Text = p.CharString;
+                DataGridViewRow dataRow = DGV.Rows[index];
+                rtbHexadecimal.Text = dataRow.Cells["hex"].Value.ToString();
+                rtbChars.Text = dataRow.Cells["data"].Value.ToString();
             }
         }
+
+        private void DGV_Sorted(object sender, EventArgs e) => ColorRows();
 
         private void rtbChars_SelectionChanged(object sender, EventArgs e)
         {
@@ -455,7 +496,7 @@ namespace PepeSniffer
 
                 rtbHexadecimal.SelectionStart = start;
                 rtbHexadecimal.SelectionLength = selectedHexLength;
-                rtbHexadecimal.SelectionBackColor = Color.DodgerBlue;
+                rtbHexadecimal.SelectionBackColor = Color.CornflowerBlue;
             }
             else
             {
@@ -474,113 +515,28 @@ namespace PepeSniffer
             }
         }
 
-        private void rtbChars_Leave(object sender, EventArgs e)
-        {
-            rtbHexadecimal.SelectionBackColor = Color.White;
-        }
+        private void rtbChars_Leave(object sender, EventArgs e) => rtbHexadecimal.SelectionBackColor = Color.White;
 
-        private void cbProtocol_SelectionChangeCommitted(object sender, EventArgs e)
-        {
-            protocolFilter = cbProtocol.SelectedItem.ToString();
-            FilterDGV();
-        }
+        private void cbProtocol_SelectionChangeCommitted(object sender, EventArgs e) => FilterDGV();
 
-        private void tbPortFilter_TextChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                if (tbPortFilter.Text != "" & tbPortFilter.Text != null)
-                {
-                    int.Parse(tbPortFilter.Text);
-                    tbPortFilter.BackColor = Color.LimeGreen;
-                }
-                else
-                {
-                    tbPortFilter.BackColor = Color.White;
-                }
-            }
-            catch (Exception)
-            {
-                tbPortFilter.BackColor = Color.Crimson;
-            }
-            finally
-            {
-                FilterDGV();
-            }
-        }
+        private void tbFilter_TextChanged(object sender, EventArgs e) => FilterDGV();
 
-        private void tbIpFilter_TextChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                if (tbIpFilter.Text != "" & tbIpFilter.Text != null)
-                {
-                    IPAddress.Parse(tbIpFilter.Text);
-                    tbIpFilter.BackColor = Color.LimeGreen;
-                }
-                else
-                {
-                    tbIpFilter.BackColor = Color.White;
-                }
-            }
-            catch (Exception)
-            {
-                tbIpFilter.BackColor = Color.Crimson;
-            }
-            finally
-            {
-                FilterDGV();
-            }
-        }
+        private void btnPrevious_Click(object sender, EventArgs e) => SetSelectedRow(DGV.CurrentRow != null ? DGV.CurrentRow.Index - 1 : 0);
 
-        private void btnPrevious_Click(object sender, EventArgs e)
-        {
-            if (DGV.CurrentCell != null) 
-                SetSelectedRow(DGV.CurrentCell.RowIndex -1);
-        }
+        private void btnNext_Click(object sender, EventArgs e) => SetSelectedRow(DGV.CurrentRow != null ? DGV.CurrentRow.Index + 1 : 0);
 
-        private void btnNext_Click(object sender, EventArgs e)
-        {
-            if (DGV.CurrentCell != null) 
-                SetSelectedRow(DGV.CurrentCell.RowIndex + 1);
-        }
+        private void btnFirst_Click(object sender, EventArgs e) => SetSelectedRow(0);
 
-        private void btnFirst_Click(object sender, EventArgs e)
-        {
-            if (DGV.CurrentCell != null)
-                SetSelectedRow(0);
-        }
+        private void btnLast_Click(object sender, EventArgs e) => SetSelectedRow(DGV.RowCount - 1);
 
-        private void btnLast_Click(object sender, EventArgs e)
-        {
-            if (DGV.CurrentCell != null)
-                SetSelectedRow(DGV.RowCount - 1);
-        }
+        private void btnQuit_Click(object sender, EventArgs e) => Application.Exit();
 
-        private void btnQuit_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
+        private void btnPacketColoring_Click(object sender, EventArgs e) => ColorRows();
 
-        private void btnPacketColoring_Click(object sender, EventArgs e)
-        {
-            ColorRows();
-        }
+        private void btnExportToText_Click(object sender, EventArgs e) => ExportPacketsAsText();
 
-        private void btnExportToText_Click(object sender, EventArgs e)
-        {
-            ExportPacketsAsText();
-        }
+        private void btnExportToCsv_Click(object sender, EventArgs e) => ExportPacketsAsCsv();
 
-        private void btnExportToCsv_Click(object sender, EventArgs e)
-        {
-            ExportPacketsAsCsv();
-        }
-
-        private void btnExportBytesFromSelected_Click(object sender, EventArgs e)
-        {
-            ExportSelectedPacketAsBinary();
-        }
-
+        private void btnExportBytesFromSelected_Click(object sender, EventArgs e) => ExportSelectedPacketAsBinary();
     }
 }

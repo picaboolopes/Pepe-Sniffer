@@ -57,6 +57,11 @@ namespace PepeSniffer
             this.btnQuit = new System.Windows.Forms.ToolStripButton();
             this.panel1 = new System.Windows.Forms.Panel();
             this.DGV = new System.Windows.Forms.DataGridView();
+            this.captureSettings = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.tbFilter = new System.Windows.Forms.TextBox();
+            this.lblInterface = new System.Windows.Forms.Label();
+            this.cbInterfaces = new System.Windows.Forms.ComboBox();
             this.SourceIp = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SourcePort = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.DestinationIp = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -65,15 +70,8 @@ namespace PepeSniffer
             this.Time = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Length = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Data = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.captureSettings = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.tbPortFilter = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.cbProtocol = new System.Windows.Forms.ComboBox();
-            this.lblIpFilter = new System.Windows.Forms.Label();
-            this.tbIpFilter = new System.Windows.Forms.TextBox();
-            this.lblInterface = new System.Windows.Forms.Label();
-            this.cbInterfaces = new System.Windows.Forms.ComboBox();
+            this.Hex = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Raw = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.panel2.SuspendLayout();
             this.myToolbar.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -297,7 +295,9 @@ namespace PepeSniffer
             // 
             // btnAutomaticScroll
             // 
+            this.btnAutomaticScroll.Checked = true;
             this.btnAutomaticScroll.CheckOnClick = true;
+            this.btnAutomaticScroll.CheckState = System.Windows.Forms.CheckState.Checked;
             this.btnAutomaticScroll.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.btnAutomaticScroll.Image = global::PacketAnalyzer.Properties.Resources.scroll_to_last;
             this.btnAutomaticScroll.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -374,7 +374,9 @@ namespace PepeSniffer
             this.Protocol,
             this.Time,
             this.Length,
-            this.Data});
+            this.Data,
+            this.Hex,
+            this.Raw});
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = System.Drawing.Color.White;
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -396,6 +398,63 @@ namespace PepeSniffer
             this.DGV.Size = new System.Drawing.Size(1069, 402);
             this.DGV.TabIndex = 7;
             this.DGV.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGV_CellClick);
+            this.DGV.Sorted += new System.EventHandler(this.DGV_Sorted);
+            // 
+            // captureSettings
+            // 
+            this.captureSettings.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.captureSettings.Controls.Add(this.label1);
+            this.captureSettings.Controls.Add(this.tbFilter);
+            this.captureSettings.Controls.Add(this.lblInterface);
+            this.captureSettings.Controls.Add(this.cbInterfaces);
+            this.captureSettings.Dock = System.Windows.Forms.DockStyle.Top;
+            this.captureSettings.Location = new System.Drawing.Point(0, 0);
+            this.captureSettings.Name = "captureSettings";
+            this.captureSettings.Size = new System.Drawing.Size(1069, 28);
+            this.captureSettings.TabIndex = 8;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(346, 7);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(39, 15);
+            this.label1.TabIndex = 8;
+            this.label1.Text = "Filter:";
+            // 
+            // tbFilter
+            // 
+            this.tbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbFilter.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tbFilter.Location = new System.Drawing.Point(391, 3);
+            this.tbFilter.Name = "tbFilter";
+            this.tbFilter.Size = new System.Drawing.Size(675, 23);
+            this.tbFilter.TabIndex = 5;
+            this.tbFilter.TextChanged += new System.EventHandler(this.tbFilter_TextChanged);
+            // 
+            // lblInterface
+            // 
+            this.lblInterface.AutoSize = true;
+            this.lblInterface.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblInterface.Location = new System.Drawing.Point(3, 7);
+            this.lblInterface.Name = "lblInterface";
+            this.lblInterface.Size = new System.Drawing.Size(62, 15);
+            this.lblInterface.TabIndex = 2;
+            this.lblInterface.Text = "Interface:";
+            // 
+            // cbInterfaces
+            // 
+            this.cbInterfaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbInterfaces.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbInterfaces.FormattingEnabled = true;
+            this.cbInterfaces.Items.AddRange(new object[] {
+            "ALL AVAILABLE INTERFACES"});
+            this.cbInterfaces.Location = new System.Drawing.Point(71, 3);
+            this.cbInterfaces.Name = "cbInterfaces";
+            this.cbInterfaces.Size = new System.Drawing.Size(269, 23);
+            this.cbInterfaces.TabIndex = 1;
             // 
             // SourceIp
             // 
@@ -403,6 +462,7 @@ namespace PepeSniffer
             this.SourceIp.MinimumWidth = 6;
             this.SourceIp.Name = "SourceIp";
             this.SourceIp.ReadOnly = true;
+            this.SourceIp.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.SourceIp.Width = 134;
             // 
             // SourcePort
@@ -411,6 +471,7 @@ namespace PepeSniffer
             this.SourcePort.MinimumWidth = 6;
             this.SourcePort.Name = "SourcePort";
             this.SourcePort.ReadOnly = true;
+            this.SourcePort.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.SourcePort.Width = 133;
             // 
             // DestinationIp
@@ -419,6 +480,7 @@ namespace PepeSniffer
             this.DestinationIp.MinimumWidth = 6;
             this.DestinationIp.Name = "DestinationIp";
             this.DestinationIp.ReadOnly = true;
+            this.DestinationIp.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.DestinationIp.Width = 134;
             // 
             // DestinationPort
@@ -427,6 +489,7 @@ namespace PepeSniffer
             this.DestinationPort.MinimumWidth = 6;
             this.DestinationPort.Name = "DestinationPort";
             this.DestinationPort.ReadOnly = true;
+            this.DestinationPort.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.DestinationPort.Width = 134;
             // 
             // Protocol
@@ -463,115 +526,19 @@ namespace PepeSniffer
             this.Data.Name = "Data";
             this.Data.ReadOnly = true;
             // 
-            // captureSettings
+            // Hex
             // 
-            this.captureSettings.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.captureSettings.Controls.Add(this.label2);
-            this.captureSettings.Controls.Add(this.tbPortFilter);
-            this.captureSettings.Controls.Add(this.label1);
-            this.captureSettings.Controls.Add(this.cbProtocol);
-            this.captureSettings.Controls.Add(this.lblIpFilter);
-            this.captureSettings.Controls.Add(this.tbIpFilter);
-            this.captureSettings.Controls.Add(this.lblInterface);
-            this.captureSettings.Controls.Add(this.cbInterfaces);
-            this.captureSettings.Dock = System.Windows.Forms.DockStyle.Top;
-            this.captureSettings.Location = new System.Drawing.Point(0, 0);
-            this.captureSettings.Name = "captureSettings";
-            this.captureSettings.Size = new System.Drawing.Size(1069, 28);
-            this.captureSettings.TabIndex = 8;
+            this.Hex.HeaderText = "Hex";
+            this.Hex.Name = "Hex";
+            this.Hex.ReadOnly = true;
+            this.Hex.Visible = false;
             // 
-            // label2
+            // Raw
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(641, 6);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(34, 15);
-            this.label2.TabIndex = 9;
-            this.label2.Text = "Port:";
-            // 
-            // tbPortFilter
-            // 
-            this.tbPortFilter.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbPortFilter.Location = new System.Drawing.Point(681, 3);
-            this.tbPortFilter.Name = "tbPortFilter";
-            this.tbPortFilter.Size = new System.Drawing.Size(49, 23);
-            this.tbPortFilter.TabIndex = 10;
-            this.tbPortFilter.TextChanged += new System.EventHandler(this.tbPortFilter_TextChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(304, 7);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(57, 15);
-            this.label1.TabIndex = 8;
-            this.label1.Text = "Protocol:";
-            // 
-            // cbProtocol
-            // 
-            this.cbProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbProtocol.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbProtocol.FormattingEnabled = true;
-            this.cbProtocol.Items.AddRange(new object[] {
-            "ALL",
-            "TCP",
-            "UDP",
-            "GGP",
-            "ICMP",
-            "IDP",
-            "IGMP",
-            "IP",
-            "ND",
-            "PUP",
-            "OTHERS"});
-            this.cbProtocol.Location = new System.Drawing.Point(367, 3);
-            this.cbProtocol.Name = "cbProtocol";
-            this.cbProtocol.Size = new System.Drawing.Size(87, 23);
-            this.cbProtocol.TabIndex = 7;
-            this.cbProtocol.SelectionChangeCommitted += new System.EventHandler(this.cbProtocol_SelectionChangeCommitted);
-            // 
-            // lblIpFilter
-            // 
-            this.lblIpFilter.AutoSize = true;
-            this.lblIpFilter.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblIpFilter.Location = new System.Drawing.Point(460, 7);
-            this.lblIpFilter.Name = "lblIpFilter";
-            this.lblIpFilter.Size = new System.Drawing.Size(53, 15);
-            this.lblIpFilter.TabIndex = 4;
-            this.lblIpFilter.Text = "Filter IP:";
-            // 
-            // tbIpFilter
-            // 
-            this.tbIpFilter.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbIpFilter.Location = new System.Drawing.Point(519, 3);
-            this.tbIpFilter.Name = "tbIpFilter";
-            this.tbIpFilter.Size = new System.Drawing.Size(116, 23);
-            this.tbIpFilter.TabIndex = 5;
-            this.tbIpFilter.TextChanged += new System.EventHandler(this.tbIpFilter_TextChanged);
-            // 
-            // lblInterface
-            // 
-            this.lblInterface.AutoSize = true;
-            this.lblInterface.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblInterface.Location = new System.Drawing.Point(3, 7);
-            this.lblInterface.Name = "lblInterface";
-            this.lblInterface.Size = new System.Drawing.Size(62, 15);
-            this.lblInterface.TabIndex = 2;
-            this.lblInterface.Text = "Interface:";
-            // 
-            // cbInterfaces
-            // 
-            this.cbInterfaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbInterfaces.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbInterfaces.FormattingEnabled = true;
-            this.cbInterfaces.Items.AddRange(new object[] {
-            "ALL AVAILABLE INTERFACES"});
-            this.cbInterfaces.Location = new System.Drawing.Point(71, 3);
-            this.cbInterfaces.Name = "cbInterfaces";
-            this.cbInterfaces.Size = new System.Drawing.Size(227, 23);
-            this.cbInterfaces.TabIndex = 1;
+            this.Raw.HeaderText = "Raw";
+            this.Raw.Name = "Raw";
+            this.Raw.ReadOnly = true;
+            this.Raw.Visible = false;
             // 
             // Sniffer
             // 
@@ -613,12 +580,8 @@ namespace PepeSniffer
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.DataGridView DGV;
         private System.Windows.Forms.Panel captureSettings;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox tbPortFilter;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ComboBox cbProtocol;
-        private System.Windows.Forms.Label lblIpFilter;
-        private System.Windows.Forms.TextBox tbIpFilter;
+        private System.Windows.Forms.TextBox tbFilter;
         private System.Windows.Forms.Label lblInterface;
         private System.Windows.Forms.ComboBox cbInterfaces;
         private System.Windows.Forms.ToolStripButton btnExportToText;
@@ -641,6 +604,8 @@ namespace PepeSniffer
         private System.Windows.Forms.DataGridViewTextBoxColumn Time;
         private System.Windows.Forms.DataGridViewTextBoxColumn Length;
         private System.Windows.Forms.DataGridViewTextBoxColumn Data;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Hex;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Raw;
     }
 }
 
