@@ -13,4 +13,8 @@ Packet Analyzer in C# using raw sockets.
 
 To capture all the packets your network card must support promiscuous and monitor modes.
 
-![Pepe Sniffer](preview.png)
+![Pepe Sniffer](screenshots/preview1.png)
+
+Example showing how to filter packets.
+
+![Pepe Sniffer](screenshots/preview2.png)
